@@ -15,8 +15,7 @@ client_id = config["xweather"]["client_id"]
 client_secret = config["xweather"]["client_secret"]
 location = config["xweather"]["location"].strip()
 
-# 2. Choose the location to forecast.
-location = input("Location as latitude,longitude: ").strip()
+
 
 # 3. Request one forecast for each of the next 24 hourly periods.
 params = urllib.parse.urlencode({
