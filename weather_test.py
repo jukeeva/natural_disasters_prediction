@@ -1,11 +1,19 @@
-import getpass
+import configparser
 import json
+from pathlib import Path
 import urllib.parse
 import urllib.request
 
+
 # 1. Read credentials privately. They aren't saved to a file.
-client_id = getpass.getpass("Client ID: ")
-client_secret = getpass.getpass("Client secret: ")
+config_path = Path(__file__).resolve().parent / "config.ini"
+config = configparser.ConfigParser(interpolation=None)
+if not config.read(config_path, encoding="utf-8"):
+    raise SystemExit(f"Missing configuration file: {config_path}")
+
+client_id = config["xweather"]["client_id"]
+client_secret = config["xweather"]["client_secret"]
+location = config["xweather"]["location"].strip()
 
 # 2. Choose the location to forecast.
 location = input("Location as latitude,longitude: ").strip()
@@ -35,6 +43,25 @@ try:
         print("API error:", data.get("error"))
     else:
         forecast = data["response"][0]
+        # Take the first 12 hourly forecast periods.
+        next_12_hours = forecast["periods"][:12]
+
+        # Keep temperatures that are available; missing values aren't zero.
+        temperatures = [
+            period["tempC"]
+            for period in next_12_hours
+            if period.get("tempC") is not None
+        ]
+
+        if len(temperatures) != 12:
+            print("\nNot enough data for a complete 12-hour check.")
+        else:
+            minimum = min(temperatures)
+            freezing = minimum < 0
+
+            print(f"\nLowest forecast temperature: {minimum:.1f}°C")
+            print("Freezing forecast:", "YES" if freezing else "NO")
+        
         print("\nForecast interval:", forecast.get("interval"))
         print("Time | Predicted temperature (°C)")
 
